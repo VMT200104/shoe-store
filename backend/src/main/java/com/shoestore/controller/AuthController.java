@@ -1,7 +1,9 @@
 package com.shoestore.controller;
 
+import com.shoestore.dto.request.LoginRequest;
 import com.shoestore.dto.request.RegisterRequest;
 import com.shoestore.dto.response.ApiResponse;
+import com.shoestore.dto.response.JwtResponse;
 import com.shoestore.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,15 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         ApiResponse<String> response = authService.register(registerRequest);
+        if (response.getStatus() == 200) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<JwtResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        ApiResponse<JwtResponse> response = authService.login(loginRequest);
         if (response.getStatus() == 200) {
             return ResponseEntity.ok(response);
         }
