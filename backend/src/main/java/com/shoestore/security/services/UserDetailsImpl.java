@@ -7,14 +7,16 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public class UserDetailsImpl implements UserDetails {
+public class UserDetailsImpl implements UserDetails, OAuth2User {
     private static final long serialVersionUID = 1L;
 
     @Getter
@@ -25,6 +27,8 @@ public class UserDetailsImpl implements UserDetails {
     @JsonIgnore
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
+    @Getter
+    private Map<String, Object> attributes;
 
     public static UserDetailsImpl build(User user) {
         List<GrantedAuthority> authorities = user.getRoles().stream()
@@ -36,7 +40,14 @@ public class UserDetailsImpl implements UserDetails {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                authorities);
+                authorities,
+                null);
+    }
+
+    public static UserDetailsImpl build(User user, Map<String, Object> attributes) {
+        UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+        userDetails.attributes = attributes;
+        return userDetails;
     }
 
     @Override
@@ -72,6 +83,11 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(id);
     }
 
     @Override
