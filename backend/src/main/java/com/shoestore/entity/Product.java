@@ -27,6 +27,8 @@ public class Product extends BaseEntity {
 
     private String image;
 
+    private String imagePublicId;
+
     private Integer stock;
 
     @ManyToOne(fetch = FetchType.LAZY)

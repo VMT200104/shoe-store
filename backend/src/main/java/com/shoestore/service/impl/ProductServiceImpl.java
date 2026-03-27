@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +46,9 @@ public class ProductServiceImpl implements ProductService {
     public ApiResponse<Product> saveProduct(Product product, MultipartFile image) {
         try {
             if (image != null && !image.isEmpty()) {
-                String imageUrl = cloudinaryService.uploadFile(image);
-                product.setImage(imageUrl);
+                Map<String, String> uploadResult = cloudinaryService.uploadFile(image, "products");
+                product.setImage(uploadResult.get("url"));
+                product.setImagePublicId(uploadResult.get("public_id"));
             }
             
             // Check if category exists
@@ -77,8 +79,14 @@ public class ProductServiceImpl implements ProductService {
                         existingProduct.setStock(product.getStock());
                         
                         if (image != null && !image.isEmpty()) {
-                            String imageUrl = cloudinaryService.uploadFile(image);
-                            existingProduct.setImage(imageUrl);
+                            // Delete old image if exists
+                            if (existingProduct.getImagePublicId() != null) {
+                                cloudinaryService.deleteFile(existingProduct.getImagePublicId());
+                            }
+                            
+                            Map<String, String> uploadResult = cloudinaryService.uploadFile(image, "products");
+                            existingProduct.setImage(uploadResult.get("url"));
+                            existingProduct.setImagePublicId(uploadResult.get("public_id"));
                         }
 
                         if (product.getCategory() != null && product.getCategory().getId() != null) {
@@ -101,10 +109,18 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ApiResponse<String> deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            return ApiResponse.error(404, "Product not found");
-        }
-        productRepository.deleteById(id);
-        return ApiResponse.success("Product deleted successfully");
+        return productRepository.findById(id)
+                .map(product -> {
+                    try {
+                        if (product.getImagePublicId() != null) {
+                            cloudinaryService.deleteFile(product.getImagePublicId());
+                        }
+                        productRepository.delete(product);
+                        return ApiResponse.success("Product deleted successfully");
+                    } catch (IOException e) {
+                        return ApiResponse.<String>error(500, "Error deleting image from Cloudinary: " + e.getMessage());
+                    }
+                })
+                .orElse(ApiResponse.error(404, "Product not found"));
     }
 }
