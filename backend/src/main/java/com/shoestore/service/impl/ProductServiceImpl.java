@@ -8,6 +8,10 @@ import com.shoestore.repository.ProductRepository;
 import com.shoestore.service.CloudinaryService;
 import com.shoestore.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,8 +29,10 @@ public class ProductServiceImpl implements ProductService {
     private final CloudinaryService cloudinaryService;
 
     @Override
-    public ApiResponse<List<Product>> getAllProducts() {
-        return ApiResponse.success(productRepository.findAll());
+    public ApiResponse<Page<Product>> getAllProducts(int page, int size, String sortBy, String sortDir) {
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ApiResponse.success(productRepository.findAll(pageable));
     }
 
     @Override

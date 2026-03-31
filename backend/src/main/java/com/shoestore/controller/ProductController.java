@@ -5,6 +5,7 @@ import com.shoestore.dto.response.ApiResponse;
 import com.shoestore.entity.Product;
 import com.shoestore.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,8 +22,12 @@ public class ProductController {
     private final ObjectMapper objectMapper;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Product>>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<ApiResponse<Page<Product>>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        return ResponseEntity.ok(productService.getAllProducts(page, size, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")
