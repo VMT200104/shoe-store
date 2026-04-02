@@ -7,16 +7,19 @@ import com.shoestore.repository.CategoryRepository;
 import com.shoestore.repository.ProductRepository;
 import com.shoestore.service.CloudinaryService;
 import com.shoestore.service.ProductService;
+import com.shoestore.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +36,20 @@ public class ProductServiceImpl implements ProductService {
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return ApiResponse.success(productRepository.findAll(pageable));
+    }
+
+    @Override
+    public ApiResponse<Page<Product>> getFilteredProducts(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Boolean inStock, int page, int size, String sortBy, String sortDir) {
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Specification<Product> spec = Specification.where(ProductSpecification.hasName(name))
+                .and(ProductSpecification.hasCategoryId(categoryId))
+                .and(ProductSpecification.priceGreaterThanOrEqual(minPrice))
+                .and(ProductSpecification.priceLessThanOrEqual(maxPrice))
+                .and(ProductSpecification.isInStock(inStock));
+
+        return ApiResponse.success(productRepository.findAll(spec, pageable));
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -23,11 +24,16 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Product>>> getAllProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean inStock,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
-        return ResponseEntity.ok(productService.getAllProducts(page, size, sortBy, sortDir));
+        return ResponseEntity.ok(productService.getFilteredProducts(name, categoryId, minPrice, maxPrice, inStock, page, size, sortBy, sortDir));
     }
 
     @GetMapping("/{id}")
